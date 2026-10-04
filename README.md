@@ -1,1 +1,1 @@
-# CSE598-heterogeneous-rag-planner
+# CSE598-Heterogeneous-RAG-Planner
