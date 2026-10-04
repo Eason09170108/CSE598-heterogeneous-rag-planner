@@ -91,3 +91,5 @@ three stores are not equally important:
 
 Raw sample with questions, answer types, and keyword flags:
 [`findings/r1_sample_50.csv`](./r1_sample_50.csv)
+
+Decision (Oct 3): R will be built with only the drug.state field initially, given that 6-8% of the R1 sample needed R and nearly all of that was driven by dosage-form conditions. Schema will be left extensible (e.g. a JSON attributes column) in case later evaluation shows other fields are needed.
