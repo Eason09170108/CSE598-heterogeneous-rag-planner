@@ -20,15 +20,10 @@ different OpenAI-compatible backend (including the real OpenAI API).
 
 Retrieval strategy per store (simplified for Stage 2 — a real planner /
 query-decomposition step is future work, not this module's job):
-  - V alone: embed the whole question and retrieve top-k candidate nodes.
-  - V+G together: multi-symptom-intersection — split the question into
-    phrases, find V anchors per phrase, expand 1-hop via G, and rank
-    candidates by how many distinct phrases' anchors reach them. See
-    _retrieve_g_intersection's docstring for why (plain single-anchor BFS
-    was found, via labeling.py, to miss ~60% of questions even using all
-    three stores — V's whole-question embedding anchors on only the
-    single strongest-matching symptom and ignores the rest).
-  - G alone: no anchor without V, contributes nothing (by design).
+  - V: always embed the raw question text and retrieve top-k candidate
+    nodes. This also serves as the "entity anchor" step for G.
+  - G: starting from the top-ranked V candidate (the anchor entity),
+    collect its 1-hop neighbors as additional structured context.
   - R: scoped to `drug.state` only (see findings/r_scope_decision.md).
     A tiny keyword match against {solid, liquid, gas} in the question
     decides the state_filter; if none of those words appear, R is
@@ -41,9 +36,7 @@ labeling script's brute-force search over all subsets.
 """
 
 import os
-import re
 import time
-from collections import Counter
 from dataclasses import dataclass, field
 
 import openai
@@ -87,76 +80,46 @@ def _retrieve_v(stores, question, k=10):
     return lines, node_ids
 
 
-def _split_into_phrases(question):
+def _retrieve_g(stores, anchor_node_ids, hops=2, per_node_k=10, total_k=200):
     """
-    Heuristic splitter: breaks a question into candidate symptom/claim
-    sub-phrases on commas and conjunctions, so each can be embedded and
-    matched against V separately instead of the whole question at once.
-    Fragments shorter than 3 words are dropped (usually leftover
-    connectives, e.g. "and", "while"). Falls back to the whole question
-    if splitting produces nothing usable.
+    Multi-hop BFS over G starting from multiple anchor nodes (the top-N V
+    matches). Each hop expands every frontier node by up to per_node_k
+    neighbors (via stores.query_g), stopping at `hops` levels or once
+    total_k nodes have been collected, whichever comes first.
+
+    Single-hop-from-one-anchor was found (via labeling.py on a 200-question
+    sample) to recover the gold answer in only ~27% of cases even combined
+    with V and R — this is the fix for that: see findings/ for the before/
+    after comparison once re-run.
+
+    Returns (context_lines, node_ids).
     """
-    raw_parts = re.split(r",|\band\b|\bor\b|\bbut\b|\bwhile\b", question, flags=re.IGNORECASE)
-    phrases = [p.strip() for p in raw_parts if len(p.strip().split()) >= 3]
-    return phrases if phrases else [question]
+    if not anchor_node_ids:
+        return [], []
 
-
-def _retrieve_g_intersection(stores, question, per_phrase_v_k=5, per_anchor_g_k=15, top_k=20):
-    """
-    Multi-symptom-intersection retrieval, used whenever both V and G are
-    requested together (replaces plain top-3-anchor BFS for that case).
-
-    Motivation (found via labeling.py on a 200-question sample): a single
-    V search over the *whole* question tends to anchor on whichever one
-    symptom/phrase has the strongest textual match, then BFS from there —
-    missing diseases whose correct identification requires combining
-    several symptoms together (e.g. "infantile Refsum disease": V's
-    whole-question top-10 were all diseases matching "night blindness"
-    alone; none were the gold answer, because "learning challenges" and
-    "severe early vision impairment" were never used as separate signals).
-    See findings/ for this case in detail.
-
-    Method: split the question into phrases, run V separately per phrase
-    to get phrase-level anchors, expand each anchor 1-hop via G, and rank
-    candidate nodes by how many DISTINCT phrases' anchor sets reach them
-    (a node reachable from anchors found under multiple different symptom
-    phrases outranks one reachable from only one).
-
-    Returns (context_lines, node_ids, v_anchor_ids) — v_anchor_ids are the
-    phrase-level V anchors themselves, included so callers can credit V's
-    own contribution without a separate whole-question V call.
-    """
-    phrases = _split_into_phrases(question)
-
-    phrase_neighbor_sets = []
-    v_anchor_ids = []
-    for phrase in phrases:
-        hits = stores.query_v(phrase, k=per_phrase_v_k)
-        phrase_anchor_ids = [node_id for node_id, _ in hits]
-        v_anchor_ids.extend(phrase_anchor_ids)
-
-        neighbors_this_phrase = set()
-        for anchor_id in phrase_anchor_ids:
-            for neighbor_id, _name, _ntype, _relation in stores.query_g(
-                anchor_id, relation=None, k=per_anchor_g_k
-            ):
-                neighbors_this_phrase.add(neighbor_id)
-        phrase_neighbor_sets.append(neighbors_this_phrase)
-
-    vote_counts = Counter()
-    for neighbor_set in phrase_neighbor_sets:
-        for node_id in neighbor_set:
-            vote_counts[node_id] += 1
-
+    visited = set(anchor_node_ids)
+    frontier = list(anchor_node_ids)
     lines = []
     node_ids = []
-    for node_id, votes in vote_counts.most_common(top_k):
-        info = stores.skb.node_info[node_id]
-        lines.append(f"[G intersection] {info['name']} ({info['type']}) "
-                      f"matched {votes}/{len(phrases)} symptom phrases")
-        node_ids.append(node_id)
 
-    return lines, node_ids, v_anchor_ids
+    for hop in range(1, hops + 1):
+        next_frontier = []
+        for node_id in frontier:
+            hits = stores.query_g(node_id, relation=None, k=per_node_k)
+            for neighbor_id, name, ntype, relation in hits:
+                if neighbor_id in visited:
+                    continue
+                visited.add(neighbor_id)
+                lines.append(f"[G hop={hop}] --[{relation}]--> {name} ({ntype})")
+                node_ids.append(neighbor_id)
+                next_frontier.append(neighbor_id)
+                if len(node_ids) >= total_k:
+                    return lines, node_ids
+        frontier = next_frontier
+        if not frontier:
+            break
+
+    return lines, node_ids
 
 
 def _retrieve_r(stores, question, k=10):
@@ -184,26 +147,21 @@ def retrieve_context(question, store_subset, stores):
     context_lines = []
     retrieved_node_ids = []
 
-    has_v = "V" in store_subset
-    has_g = "G" in store_subset
-
-    if has_v and has_g:
-        # Combined: multi-symptom-intersection (phrase-split V anchors ->
-        # G 1-hop voting). See _retrieve_g_intersection's docstring.
-        g_lines, g_ids, v_anchor_ids = _retrieve_g_intersection(stores, question)
-        context_lines.extend(g_lines)
-        retrieved_node_ids.extend(g_ids)
-        retrieved_node_ids.extend(v_anchor_ids)
-    elif has_v:
-        # V alone: plain whole-question semantic search, no G to anchor into.
+    # V always runs first if requested, since G's anchors depend on it.
+    # Top-3 V matches (not just top-1) are used as anchors for G, since a
+    # single top-1 anchor was found to miss the correct entity too often.
+    anchor_node_ids = []
+    if "V" in store_subset:
         v_lines, v_ids = _retrieve_v(stores, question)
         context_lines.extend(v_lines)
         retrieved_node_ids.extend(v_ids)
-    elif has_g:
-        # G alone has no anchor without V, so there is nothing to traverse
-        # from. Intentionally contributes nothing (consistent with G's
-        # near-zero standalone hit rate observed via labeling.py).
-        pass
+        anchor_node_ids = v_ids[:3]
+
+    if "G" in store_subset:
+        # If V wasn't run, G has no anchors and is skipped (logged as empty).
+        g_lines, g_ids = _retrieve_g(stores, anchor_node_ids)
+        context_lines.extend(g_lines)
+        retrieved_node_ids.extend(g_ids)
 
     if "R" in store_subset:
         r_lines, r_ids = _retrieve_r(stores, question)
