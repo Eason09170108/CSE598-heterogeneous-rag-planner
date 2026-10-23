@@ -80,7 +80,7 @@ def _retrieve_v(stores, question, k=10):
     return lines, node_ids
 
 
-def _retrieve_g(stores, anchor_node_ids, hops=2, per_node_k=10, total_k=50):
+def _retrieve_g(stores, anchor_node_ids, hops=2, per_node_k=10, total_k=200):
     """
     Multi-hop BFS over G starting from multiple anchor nodes (the top-N V
     matches). Each hop expands every frontier node by up to per_node_k
