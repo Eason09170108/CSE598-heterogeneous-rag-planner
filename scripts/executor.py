@@ -67,7 +67,7 @@ class ExecutionResult:
     output_tokens: int = 0
 
 
-def _retrieve_v(stores, question, k=5):
+def _retrieve_v(stores, question, k=10):
     """Semantic search over node descriptions. Returns (context_lines, node_ids)."""
     hits = stores.query_v(question, k=k)
     lines = []
@@ -80,16 +80,45 @@ def _retrieve_v(stores, question, k=5):
     return lines, node_ids
 
 
-def _retrieve_g(stores, anchor_node_id, k=10):
-    """1-hop neighbors of the anchor node. Returns (context_lines, node_ids)."""
-    if anchor_node_id is None:
+def _retrieve_g(stores, anchor_node_ids, hops=2, per_node_k=10, total_k=50):
+    """
+    Multi-hop BFS over G starting from multiple anchor nodes (the top-N V
+    matches). Each hop expands every frontier node by up to per_node_k
+    neighbors (via stores.query_g), stopping at `hops` levels or once
+    total_k nodes have been collected, whichever comes first.
+
+    Single-hop-from-one-anchor was found (via labeling.py on a 200-question
+    sample) to recover the gold answer in only ~27% of cases even combined
+    with V and R — this is the fix for that: see findings/ for the before/
+    after comparison once re-run.
+
+    Returns (context_lines, node_ids).
+    """
+    if not anchor_node_ids:
         return [], []
-    hits = stores.query_g(anchor_node_id, relation=None, k=k)
+
+    visited = set(anchor_node_ids)
+    frontier = list(anchor_node_ids)
     lines = []
     node_ids = []
-    for neighbor_id, name, ntype, relation in hits:
-        lines.append(f"[G] --[{relation}]--> {name} ({ntype})")
-        node_ids.append(neighbor_id)
+
+    for hop in range(1, hops + 1):
+        next_frontier = []
+        for node_id in frontier:
+            hits = stores.query_g(node_id, relation=None, k=per_node_k)
+            for neighbor_id, name, ntype, relation in hits:
+                if neighbor_id in visited:
+                    continue
+                visited.add(neighbor_id)
+                lines.append(f"[G hop={hop}] --[{relation}]--> {name} ({ntype})")
+                node_ids.append(neighbor_id)
+                next_frontier.append(neighbor_id)
+                if len(node_ids) >= total_k:
+                    return lines, node_ids
+        frontier = next_frontier
+        if not frontier:
+            break
+
     return lines, node_ids
 
 
@@ -118,17 +147,19 @@ def retrieve_context(question, store_subset, stores):
     context_lines = []
     retrieved_node_ids = []
 
-    # V always runs first if requested, since G's anchor depends on it.
-    anchor_node_id = None
+    # V always runs first if requested, since G's anchors depend on it.
+    # Top-3 V matches (not just top-1) are used as anchors for G, since a
+    # single top-1 anchor was found to miss the correct entity too often.
+    anchor_node_ids = []
     if "V" in store_subset:
         v_lines, v_ids = _retrieve_v(stores, question)
         context_lines.extend(v_lines)
         retrieved_node_ids.extend(v_ids)
-        anchor_node_id = v_ids[0] if v_ids else None
+        anchor_node_ids = v_ids[:3]
 
     if "G" in store_subset:
-        # If V wasn't run, G has no anchor and is skipped (logged as empty).
-        g_lines, g_ids = _retrieve_g(stores, anchor_node_id)
+        # If V wasn't run, G has no anchors and is skipped (logged as empty).
+        g_lines, g_ids = _retrieve_g(stores, anchor_node_ids)
         context_lines.extend(g_lines)
         retrieved_node_ids.extend(g_ids)
 
