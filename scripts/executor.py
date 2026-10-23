@@ -142,7 +142,8 @@ def retrieve_context(question, store_subset, stores):
     return context_text, retrieved_node_ids, retrieval_latency
 
 
-def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODEL):
+def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODEL,
+                  max_tokens=1024):
     """
     Execute a question against the given store_subset (e.g. ("V",), ("V","G"),
     ("V","R","G")) and return an ExecutionResult with the answer plus
@@ -152,6 +153,12 @@ def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODE
     stores: a scripts.stores.StoreManager instance.
     client: an openai.OpenAI() client; created from LLM_API_KEY/LLM_BASE_URL
             env vars if not provided.
+    max_tokens: completion token budget. qwen38-27b (the default model) is a
+        reasoning model that emits a `reasoning` field before `content` —
+        both count against max_tokens, so this must be large enough to leave
+        room for the final answer after reasoning, or `content` comes back
+        empty/None (observed at 256 on non-trivial prompts; 1024 is a safer
+        default, raise further if answers still truncate).
     """
     if client is None:
         client = openai.OpenAI(
@@ -173,12 +180,13 @@ def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODE
     t1 = time.time()
     response = client.chat.completions.create(
         model=llm_model,
-        max_tokens=256,
+        max_tokens=max_tokens,
         messages=[{"role": "user", "content": prompt}],
     )
     llm_latency = time.time() - t1
 
     answer = response.choices[0].message.content if response.choices else ""
+    answer = (answer or "").strip()
 
     return ExecutionResult(
         question=question,
