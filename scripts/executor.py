@@ -91,20 +91,16 @@ def _retrieve_r(stores, question, k=10):
     return lines, node_ids
 
 
-def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODEL):
+def retrieve_context(question, store_subset, stores):
     """
-    Execute a question against the given store_subset (e.g. ("V",), ("V","G"),
-    ("V","R","G")) and return an ExecutionResult with the answer plus
-    instrumentation (latency, token counts).
+    Run retrieval ONLY (no LLM call) against the given store_subset.
+    Returns (context_text, retrieved_node_ids, retrieval_latency_sec).
 
-    store_subset: tuple of any of "V", "R", "G".
-    stores: a scripts.stores.StoreManager instance.
-    client: an anthropic.Anthropic() client; created from ANTHROPIC_API_KEY
-            env var if not provided.
+    Separated from run_executor so the labeling script can brute-force all
+    2^|{V,R,G}|-1 subsets per question without paying for an LLM call on
+    every one of them — labeling only needs to know whether the gold
+    answer node is among the retrieved node ids, not a generated answer.
     """
-    if client is None:
-        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-
     t0 = time.time()
     context_lines = []
     retrieved_node_ids = []
@@ -129,8 +125,27 @@ def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODE
         retrieved_node_ids.extend(r_ids)
 
     retrieval_latency = time.time() - t0
-
     context_text = "\n".join(context_lines) if context_lines else "(no retrieved context)"
+    return context_text, retrieved_node_ids, retrieval_latency
+
+
+def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODEL):
+    """
+    Execute a question against the given store_subset (e.g. ("V",), ("V","G"),
+    ("V","R","G")) and return an ExecutionResult with the answer plus
+    instrumentation (latency, token counts).
+
+    store_subset: tuple of any of "V", "R", "G".
+    stores: a scripts.stores.StoreManager instance.
+    client: an anthropic.Anthropic() client; created from ANTHROPIC_API_KEY
+            env var if not provided.
+    """
+    if client is None:
+        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+
+    context_text, retrieved_node_ids, retrieval_latency = retrieve_context(
+        question, store_subset, stores
+    )
     prompt = (
         "Answer the question using ONLY the retrieved context below. "
         "If the answer is not contained in the context, say you don't know.\n\n"
