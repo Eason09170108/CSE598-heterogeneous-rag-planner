@@ -8,8 +8,15 @@ either by a planner later, or exhaustively by the labeling script in this
 stage), this module:
   1. retrieves context from each store in the subset,
   2. assembles that context into a prompt,
-  3. calls an LLM (Anthropic Claude) to generate the final answer,
+  3. calls an LLM to generate the final answer,
   4. instruments wall-clock latency per step and token usage.
+
+LLM backend: uses the OpenAI python SDK against an OpenAI-compatible
+endpoint, defaulting to ASU Voyager (https://openai.rc.asu.edu/v1, free
+for ASU accounts, no Claude models available there as of Oct 2026 — the
+project uses a strong open model served through it instead, see LLM_MODEL
+below). Set LLM_BASE_URL / LLM_API_KEY / LLM_MODEL env vars to point at a
+different OpenAI-compatible backend (including the real OpenAI API).
 
 Retrieval strategy per store (simplified for Stage 2 — a real planner /
 query-decomposition step is future work, not this module's job):
@@ -29,22 +36,21 @@ labeling script's brute-force search over all subsets.
 """
 
 import os
-import re
 import time
 from dataclasses import dataclass, field
 
-import anthropic
+import openai
 
 STATE_KEYWORDS = ("solid", "liquid", "gas")
 
-LLM_MODEL = "claude-sonnet-4-5"  # change here if the team standardizes on another model
-
-# Set ANTHROPIC_BASE_URL to point at an alternate Anthropic-SDK-compatible
-# endpoint (e.g. ASU Voyager: https://openai.rc.asu.edu, no trailing /v1).
-# Left unset, the anthropic SDK talks to Anthropic's own API as usual.
-# If using Voyager (or any non-Anthropic backend), also set LLM_MODEL above
-# to that backend's actual model name — it will NOT be a real Claude model.
-ANTHROPIC_BASE_URL = os.environ.get("ANTHROPIC_BASE_URL")
+# Defaults target ASU Voyager's free OpenAI-compatible gateway.
+# qwen38-27b: "Recommended" tag on Voyager, highest LiveBench score (81.7)
+# among non-testing models as of Oct 2026. Override via env vars to use a
+# different Voyager model or a different OpenAI-compatible provider
+# entirely (e.g. real OpenAI: LLM_BASE_URL unset, LLM_API_KEY=<openai key>,
+# LLM_MODEL=gpt-4o-mini).
+LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://openai.rc.asu.edu/v1")
+LLM_MODEL = os.environ.get("LLM_MODEL", "qwen38-27b")
 
 
 @dataclass
@@ -144,14 +150,14 @@ def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODE
 
     store_subset: tuple of any of "V", "R", "G".
     stores: a scripts.stores.StoreManager instance.
-    client: an anthropic.Anthropic() client; created from ANTHROPIC_API_KEY
-            env var if not provided.
+    client: an openai.OpenAI() client; created from LLM_API_KEY/LLM_BASE_URL
+            env vars if not provided.
     """
     if client is None:
-        client_kwargs = {"api_key": os.environ["ANTHROPIC_API_KEY"]}
-        if ANTHROPIC_BASE_URL:
-            client_kwargs["base_url"] = ANTHROPIC_BASE_URL
-        client = anthropic.Anthropic(**client_kwargs)
+        client = openai.OpenAI(
+            api_key=os.environ["LLM_API_KEY"],
+            base_url=LLM_BASE_URL,
+        )
 
     context_text, retrieved_node_ids, retrieval_latency = retrieve_context(
         question, store_subset, stores
@@ -165,14 +171,14 @@ def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODE
     )
 
     t1 = time.time()
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=llm_model,
         max_tokens=256,
         messages=[{"role": "user", "content": prompt}],
     )
     llm_latency = time.time() - t1
 
-    answer = response.content[0].text if response.content else ""
+    answer = response.choices[0].message.content if response.choices else ""
 
     return ExecutionResult(
         question=question,
@@ -183,6 +189,6 @@ def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODE
         retrieval_latency_sec=retrieval_latency,
         llm_latency_sec=llm_latency,
         total_latency_sec=retrieval_latency + llm_latency,
-        input_tokens=response.usage.input_tokens,
-        output_tokens=response.usage.output_tokens,
+        input_tokens=response.usage.prompt_tokens,
+        output_tokens=response.usage.completion_tokens,
     )
