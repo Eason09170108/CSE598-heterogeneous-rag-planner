@@ -39,6 +39,13 @@ STATE_KEYWORDS = ("solid", "liquid", "gas")
 
 LLM_MODEL = "claude-sonnet-4-5"  # change here if the team standardizes on another model
 
+# Set ANTHROPIC_BASE_URL to point at an alternate Anthropic-SDK-compatible
+# endpoint (e.g. ASU Voyager: https://openai.rc.asu.edu, no trailing /v1).
+# Left unset, the anthropic SDK talks to Anthropic's own API as usual.
+# If using Voyager (or any non-Anthropic backend), also set LLM_MODEL above
+# to that backend's actual model name — it will NOT be a real Claude model.
+ANTHROPIC_BASE_URL = os.environ.get("ANTHROPIC_BASE_URL")
+
 
 @dataclass
 class ExecutionResult:
@@ -141,7 +148,10 @@ def run_executor(question, store_subset, stores, client=None, llm_model=LLM_MODE
             env var if not provided.
     """
     if client is None:
-        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+        client_kwargs = {"api_key": os.environ["ANTHROPIC_API_KEY"]}
+        if ANTHROPIC_BASE_URL:
+            client_kwargs["base_url"] = ANTHROPIC_BASE_URL
+        client = anthropic.Anthropic(**client_kwargs)
 
     context_text, retrieved_node_ids, retrieval_latency = retrieve_context(
         question, store_subset, stores
