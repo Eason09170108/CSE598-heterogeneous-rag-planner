@@ -43,19 +43,23 @@ def to_bool(series):
     )
 
 
+def filled_mask(series):
+    """True where a cell is a real, non-empty value (handles NaN, which
+    str()-ifies to the literal string "nan" and would otherwise look
+    "filled" to a naive non-empty-string check)."""
+    return series.notna() & (series.astype(str).str.strip().str.lower() != "nan") \
+        & (series.astype(str).str.strip() != "")
+
+
 def main():
     df = pd.read_csv(SHEET_PATH)
 
-    has_manual = "manual_correct" in df.columns and (
-        df["manual_correct"].astype(str).str.strip().ne("").any()
-    )
+    manual_filled = "manual_correct" in df.columns and filled_mask(df["manual_correct"])
+    has_manual = bool(manual_filled.any()) if "manual_correct" in df.columns else False
     has_judge = "llm_judge_correct" in df.columns and df["llm_judge_correct"].notna().any()
 
     if has_manual and has_judge:
-        both = (
-            df["manual_correct"].astype(str).str.strip().ne("")
-            & df["llm_judge_correct"].notna()
-        )
+        both = manual_filled & df["llm_judge_correct"].notna()
         if both.any():
             sub = df[both].copy()
             manual_b = to_bool(sub["manual_correct"])
