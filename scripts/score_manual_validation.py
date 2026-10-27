@@ -3,18 +3,26 @@ score_manual_validation.py
 
 Stage 3.5: Accuracy metric validation (scoring step).
 
-Reads findings/accuracy_metric_validation_sheet.csv after its
-`manual_correct` column has been filled in by hand (TRUE/FALSE per row),
-and computes:
-  - human-judged accuracy, overall and per baseline (B1 / B2)
+Reads findings/accuracy_metric_validation_sheet.csv and compares the
+free `answer_contains_gold_name` substring proxy against a better
+reference judgement, computing:
+  - reference-judged accuracy, overall and per baseline (B1 / B2)
   - the automated proxy's accuracy, for comparison
-  - the agreement rate between the automated proxy and manual judgement
+  - the agreement rate between the automated proxy and the reference
   - a breakdown of disagreements (false positives / false negatives of
-    the proxy, relative to the human judgement)
+    the proxy, relative to the reference)
+
+The "reference" column is picked automatically, in priority order:
+  1. manual_correct, if a person filled it in by hand for a row
+  2. llm_judge_correct, if scripts/llm_judge.py was run (see that
+     module's docstring -- an LLM judge is itself imperfect and should
+     be spot-checked against a few manually-judged rows; if both
+     columns are present for a row, this script also reports judge-vs-
+     human agreement so that check is visible, not just assumed).
 
 This directly answers the methodology concern raised about validating
 automatically-derived labels/metrics: it reports how much the free
-`answer_contains_gold_name` proxy over- or under-counts correctness,
+proxy over- or under-counts correctness relative to the reference,
 rather than just asserting the proxy number as "accuracy."
 
 Usage:
@@ -38,14 +46,35 @@ def to_bool(series):
 def main():
     df = pd.read_csv(SHEET_PATH)
 
-    missing = df["manual_correct"].isna() | (df["manual_correct"].astype(str).str.strip() == "")
+    has_manual = "manual_correct" in df.columns and (
+        df["manual_correct"].astype(str).str.strip().ne("").any()
+    )
+    has_judge = "llm_judge_correct" in df.columns and df["llm_judge_correct"].notna().any()
+
+    if has_manual and has_judge:
+        both = (
+            df["manual_correct"].astype(str).str.strip().ne("")
+            & df["llm_judge_correct"].notna()
+        )
+        if both.any():
+            sub = df[both].copy()
+            manual_b = to_bool(sub["manual_correct"])
+            judge_b = to_bool(sub["llm_judge_correct"].astype(str))
+            print("=== LLM judge vs. human agreement "
+                  f"(n={len(sub)} rows with both) ===")
+            print(f"Agreement: {(manual_b == judge_b).mean():.1%}\n")
+
+    reference_col = "manual_correct" if has_manual else "llm_judge_correct"
+    print(f"(Using '{reference_col}' as the reference judgement column.)\n")
+
+    missing = df[reference_col].isna() | (df[reference_col].astype(str).str.strip() == "")
     if missing.any():
-        print(f"WARNING: {missing.sum()} row(s) have no manual_correct value yet -- "
+        print(f"WARNING: {missing.sum()} row(s) have no {reference_col} value yet -- "
               f"excluding them from scoring.")
         df = df[~missing].copy()
 
-    df["manual_correct_bool"] = to_bool(df["manual_correct"])
-    df["proxy_bool"] = to_bool(df["answer_contains_gold_name"])
+    df["manual_correct_bool"] = to_bool(df[reference_col].astype(str))
+    df["proxy_bool"] = to_bool(df["answer_contains_gold_name"].astype(str))
 
     df["agree"] = df["manual_correct_bool"] == df["proxy_bool"]
     # Proxy said correct, human disagreed (proxy over-counts).
