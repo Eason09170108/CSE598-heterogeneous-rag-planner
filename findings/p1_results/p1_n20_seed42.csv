@@ -1,0 +1,84 @@
+q_id,question,split,gold_answer_ids,gold_names,store_subset,answer,retrieval_hit,answer_contains_gold_name,retrieval_latency_sec,llm_latency_sec,total_latency_sec,input_tokens,output_tokens
+10476,Search for conditions without any approved treatments that exhibit an abnormal full-field electroretinogram finding.,,27543,occult macular dystrophy,V+G,"I don't know. The retrieved context does not contain information linking specific conditions to the ""abnormal full-field electroretinogram"" finding, nor does it include any details about approved treatments for such conditions.",True,False,0.0319,10.1813,10.2132,2875,331
+1824,"Which disease linked to mediastinal teratomas typically manifests with fever, chronic fatigue, and extensive muscle and joint pain?",,37123,extragonadal non-dysgerminomatous germ cell tumor,V+G,"I don't know. The retrieved context does not establish a clear link between a disease presenting with fever, chronic fatigue, and extensive muscle and joint pain and mediastinal teratomas specifically.",True,False,0.026,12.6761,12.7021,2380,425
+409,"Could you assist in identifying a hereditary neurological disease that causes night blindness, severe vision impairment from early childhood, and learning challenges?",,32979|28653|28902,infantile Refsum disease|X-linked intellectual disability-retinitis pigmentosa syndrome|Cohen syndrome,V+G,"Based on the retrieved context, the best match is **infantile-onset axonal motor and sensory neuropathy-optic atrophy-neurodegenerative syndrome**. It is explicitly described as a ""rare neurologic disease"" characterized by:
+5
+- **Progressive optic atrophy** (severe vision impairment from early childhood/infantile onset)
+- **Cognitive deficit** (learning challenges)
+- Early hypotonia, seizures, and other neurological features
+- Hereditary/rare etiology (prevalence <1/1,000,000)
+10
+While ""night blindness"" per se is not",False,False,0.0254,29.5835,29.6089,3009,1024
+4506,What is the name of the disease categorized as a subtype of non-specific granulomatous orchitis that features changes in testicular architecture?,,36703,orchitis (disease),V+G,I don't know. The retrieved context does not identify a specific named subtype of non-specific granulomatous orchitis that features changes in testicular architecture.,True,False,0.0253,23.7269,23.7522,3834,807
+4012,"Which disease, associated with pulmonary blastoma yet distinct, is more common in middle-aged people but rare in children?",,96125,epithelial predominant pulmonary blastoma,V+G,"**Epithelial predominant pulmonary blastoma** – a subtype of pulmonary blastoma described as ""affecting mostly middle-aged adults and…rare in children,"" with a better prognosis compared to the biphasic subtype.",True,True,0.0257,10.2364,10.2622,7175,273
+3657,Could you supply a catalog of anovulatory conditions that fall under or are closely linked to ovarian disorders?,,95997,anovulation,V+G,"Based on the retrieved context, the following anovulatory/ovarian-related conditions and phenotypes are catalogued:
+15
+**Core ovarian phenotypes:**
+- Abnormal ovarian physiology
+- Premature ovarian insufficiency
+- Polycystic ovaries / Enlarged polycystic ovaries
+- Abnormal ovarian morphology
+- Abnormality of the ovary
+- Enlarged ovaries
+- Ovarian thecoma
+- Ovarian neoplasm
+- Empty ovarian follicle
+- Abnormal antral follicle count (reduced/increased)
+27
+**Reproductive/hormonal phenotypes:**
+- Female hypogonadism
+- Hyper",False,False,0.026,30.2705,30.2965,4770,1024
+2286,What disease is associated with both KIF3C and VCP proteins and is classified as a subtype or variant of anterior horn disease?,,27248,amyotrophic lateral sclerosis,V+G,"Based on the retrieved context, **amyotrophic lateral sclerosis (ALS)** is the disease that fits all the criteria:
+32
+- **VCP association:** The VCP gene summary explicitly states, ""Mutations in this gene cause IBMPFD… ALS (amyotrophic lateral sclerosis) and Charcot-Marie-Tooth disease",True,True,0.0261,31.0886,31.1146,6363,1024
+1679,What possible conditions could I have that are related to thyroid gland dysfunction or irregularities in thyroid hormone processing?,,36034|97491|36469|33657|36156,hyperthyroidism|euthyroid sick syndrome|hypothyroidism|goiter (disease)|inherited thyroid metabolism disease,V+G,"Based on the retrieved context, possible conditions related to thyroid gland dysfunction or thyroid hormone processing irregularities include:
+35
+**Thyroid Hormone Imbalance:**
+- **Hypothyroidism** (abnormally low thyroid hormone; subtypes: congenital, postsurgical, iodine-related)
+- **Hyperthyroidism** (overproduction of thyroid hormone; subtypes: Graves' disease, Plummer's disease, thyroiditis)
+- **Myxedema** (severe, long-term hypothyroidism)
+- **Thyroid crisis / Thyrotoxic crisis**
+41
+**Goiter / Thyroid Enlargement:**
+- **Dyshormonogenic goiter**
+- **Nontoxic goiter**
+- **Toxic diffuse goiter**
+- **Multinodular / solitary thyroid nodules**
+47
+**Thyroid Hormone Resistance / Metabolism Defects:**
+- **Generalized resistance to thyroid hormone**
+- **Selective pituitary resistance to thyroid hormone**
+- **Peripheral resistance to thyroid hormones**
+- **Allan-Herndon-Dudley syndrome** (thyroid hormone metabolism deficiency)
+- **Short stature–delayed bone age due to thyroid hormone metabolism deficiency**
+- **Familial hyperthyroidism due to TSH receptor mutations**
+- **Hyperthyroxinemia, familial dysalbuminemic**
+56
+**Structural / Developmental Thyroid Anomalies:**
+- **Congenital hypothyroidism / Congenital nongoitrous hypothyroidism**
+- **Thyroid ectopia, athyreosis, thyroid hemiagenesis, thyroid hypoplasia**
+- **Deafness–goiter–stippled epiphyses syndrome**
+61
+**Other:**
+- **Euthyroid sick syndrome** (abnormal thyroid hormone release during non-thyroidal illness)
+- **IgG4-related thyroid disease**
+- **Hashimoto's thyroiditis / Graves' disease** (autoimmune thyroid disorders)
+- **Abnormality of thyroid physiology** (general category)",True,True,0.0265,33.5087,33.5352,13553,1011
+11087,What are the common gene targets associated with the binding of Meclofenamic acid and Ethotoin?,,8503,SERPINA7,V+G,"I don't know. The retrieved context does not contain any information about Meclofenamic acid, Ethotoin, or their common gene binding targets.",False,False,0.0258,11.472,11.4978,6623,325
+8935,Which gene or protein is consistently not expressed in both pancreatic and tracheal tissues?,,10542,SYT2,V+G,I don't know. The retrieved context does not contain information about any gene or protein being consistently not expressed in both pancreatic and tracheal tissues.,False,False,0.0264,14.1982,14.2245,6538,423
+1424,Could you assist me in determining if there's a common disease associated with glossopharyngeal nerve paralysis and fourth cranial nerve palsy?,,36061,cranial nerve palsy,V+G,"Based on the retrieved context, I don't know of a specific common disease explicitly associated with both glossopharyngeal nerve paralysis and fourth cranial nerve palsy. The context lists them as separate entries—glossopharyngeal nerve paralysis as a child of a broader cranial nerve disease category, and fourth cranial nerve palsy as a distinct phenotype—but no single disease is identified as linking both conditions.",True,True,0.0261,12.0533,12.0795,3408,393
+9674,"Which pharmacological agent, known to exhibit a versatile therapeutic profile including analgesic, anticonvulsant, muscle relaxant, anxiolytic, and antipsychotic effects, along with neuroprotective, anti-inflammatory, and antioxidant properties, acts upon genes or proteins associated with glycine-regulated extracellular ion channels?",,14656|14660|14661,Cannabidiol|Medical Cannabis|Nabiximols,V+G,,False,False,0.0254,42.4496,42.475,8934,1024
+6912,"Could you provide information on drugs that interact with genes or proteins linked to signaling adaptor activities by converting disulfides into dithiols, ultimately influencing cell signaling processes?",,16528,"1,4-Dithiothreitol",V+G,"Based on the retrieved context, the drugs that convert disulfides into dithiols (or sulfhydryl groups) are:
+72
+1. **1,4-Dithiothreitol (DTT)** – A reagent used in biochemical studies specifically ""for reducing disulphides to dithiols"" and as a protective agent to prevent oxidation of SH (thiol) groups.
+74
+2. **Dithioerythritol** – Used ""for the reduction of disulfides to sulfhydryl groups"" and protection of sulfhydryl groups against oxidation to disulfides.
+76
+These agents can influence cell signaling processes by reducing disulfide bonds in proteins involved in signaling adaptor activities. In the retrieved graph, **PPIB** (protein disulfide isomerase B) appears as a target, and ""protein disulfide isomerase activity"" is listed as a relevant molecular function. Disulfide bond rearrangement in signaling proteins (such as those in adaptor complexes)",True,True,0.0269,35.296,35.3229,6538,1024
+520,"Can you help me find a metabolic disorder linked to epileptic encephalopathy manifesting with seizures, hypotonia, hyperreflexia, developmental delays, and unusual growth, which also involves the ABAT gene?",,30227,GABA aminotransferase deficiency,V+G,,False,False,0.0252,44.1329,44.1582,9589,1024
+488,"What is the name of the rectal cancer subtype characterized primarily by an abundance of mucin, where mucinous deposits compose more than 50% of the tumor and feature invasive malignant glandular cells within the rectal wall?",,96708|36813,rectal signet ring cell adenocarcinoma|rectum mucinous adenocarcinoma,V+G,"**Rectum mucinous adenocarcinoma** (MONDO ID: 2748). It is defined as an invasive adenocarcinoma of the rectum characterized by pools of extracellular mucin containing malignant glandular epithelial cells, with mucin constituting more than 50% of the lesion.",True,True,0.0265,10.2298,10.2563,3680,323
+1535,What drugs target the dicarbonyl/L-xylulose reductase (DCXR) protein in their mode of action?,,17972,Dihydrogenphosphate,V+G,"Based on the retrieved context, there is no information about any drug that specifically targets the DCXR (dicarbonyl/L-xylulose reductase) protein in its mode of action. The context mentions drugs in the broader network (e.g., Apalutamide, Enzalutamide, Docetaxel, Orlistat, Diethylpropion, LG-100268), but none are described as targeting DCXR. I don't know.",False,False,0.0463,18.7186,18.7649,4290,444
+3582,"What type of skin disease, linked to iris spindle cell melanoma inheritance, mainly occurs on sun-exposed areas like the back of the hand, limbs, and face?",,96376|37314,ciliary body spindle cell melanoma|iris melanoma,V+G,"Based on the retrieved context, the answer is **melanoma**. The context states that ""Melanomas can develop anywhere on your body. They most often develop in areas that have had exposure to the sun, such as your back, legs, arms and face."" Iris spindle cell melanoma is a subtype of melanoma (a spindle cell melanoma involving the iris), and the context notes that a family history of melanoma (i.e., inheritance) increases one's risk of developing melanoma.",True,False,0.0252,29.5594,29.5847,13854,845
+3811,What are the current investigational solid-state drugs that target the protein product of the MAPK1 gene?,,18112|18113|18114|18115|18116|18117|16039|18119|17994|14674|17211|18108|18109|18110|18111,"N-BENZYL-4-[4-(3-CHLOROPHENYL)-1H-PYRAZOL-3-YL]-1H-PYRROLE-2-CARBOXAMIDE|(S)-N-(1-(3-CHLORO-4-FLUOROPHENYL)-2-HYDROXYETHYL)-4-(4-(3-CHLOROPHENYL)-1H-PYRAZOL-3-YL)-1H-PYRROLE-2-CARBOXAMIDE|(3R,5Z,8S,9S,11E)-8,9,16-TRIHYDROXY-14-METHOXY-3-METHYL-3,4,9,10-TETRAHYDRO-1H-2-BENZOXACYCLOTETRADECINE-1,7(8H)-DIONE|5-(2-PHENYLPYRAZOLO[1,5-A]PYRIDIN-3-YL)-1H-PYRAZOLO[3,4-C]PYRIDAZIN-3-AMINE|(1aR,8S,13S,14S,15aR)-5,13,14-trihydroxy-3-methoxy-8-methyl-8,9,13,14,15,15a-hexahydro-6H-oxireno[k][2]benzoxacyclotetradecine-6,12(1aH)-dione|4-[4-(4-Fluorophenyl)-2-[4-[(R)-methylsulfinyl]phenyl]-1H-imidazol-5-yl]pyridine|[4-({5-(AMINOCARBONYL)-4-[(3-METHYLPHENYL)AMINO]PYRIMIDIN-2-YL}AMINO)PHENYL]ACETIC ACID|Ulixertinib|Olomoucine|Seliciclib|Perifosine|Phosphonothreonine|Purvalanol|SB220025|N,N-DIMETHYL-4-(4-PHENYL-1H-PYRAZOL-3-YL)-1H-PYRROLE-2-CARBOXAMIDE",V+R+G,"I don't know. The retrieved context does not contain information about current investigational solid-state drugs that specifically target the protein product of the MAPK1 gene. The listed solid-state drugs (Copper, Flunisolide, Alclometasone, Medrysone, Fluorometholone, Beclomethasone dipropionate, Betamethasone, Fluticasone propionate, Fluocinolone acetonide, Ulobetasol) are not identified as investigational, nor are they linked as targeting MAPK1.",False,False,0.0445,21.2391,21.2835,10894,529
+8279,"Which pharmacological compounds, mediated through genes or proteins that engage with the HFE-transferrin receptor complex, enhance insulin activity?",,14117|14121|14122|14123|14124|14125,Chromium|Chromic citrate|Chromic nitrate|Chromium gluconate|Chromium nicotinate|Chromous sulfate,V+G,"Based on the retrieved context, I don't know. While the context identifies **Insulin pork** as a pharmacological compound and shows graph-level interactions linking the HFE-transferrin receptor complex (HFE, TF, TFR2, TFRC, HJV) to insulin receptor genes (INSR, INSRR), it does not explicitly identify a pharmacological compound that *enhances* insulin activity specifically through genes or proteins engaging with the HFE-transferrin receptor complex. Insulin pork is described as insulin itself (not an enhancer of insulin activity), and no other drug or compound is mentioned in relation to",False,False,0.026,39.3633,39.3893,5665,1024
+9863,"Which key pharmacological agent, facilitated by genomic or proteomic carriers, engages with the alphav-beta3 integrin-PKCalpha complex to perform its vital biological function?",,14119,Ferric cation,V+G,"I don't know. The retrieved context does not contain information about a specific pharmacological agent that engages with the alphav-beta3 integrin-PKCalpha complex. The context only lists gene/protein interactions (ITGAV, ITGB3, PRKCA, PLP1) and related cellular complexes, but no pharmacological agent is mentioned.",False,False,0.0253,13.5045,13.5299,1739,315
